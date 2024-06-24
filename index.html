@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Editor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+  overflow-y: auto;
+  background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+    }
+
+    .container {
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+.main {
+    display: flex;
+  padding: 20px;
+  text-align: center;
+  max-width: 800px;   margin: 20px auto;
+  border-radius: 10px;
+    color: #0d0707;
+}
+  
+    h1 {
+  text-align: center;
+  margin-top: 20px;
+  color: #22044c; 
+}
+  
+    .hidden {
+      display: none;
+    }
+  
+    .image-container {
+      position: relative;
+      display: inline-block;
+      margin-top: 20px;
+      text-align: center; 
+    }
+  
+    canvas {
+      border: 1px solid #ccc;
+      display: block;
+      margin: 0 auto; 
+      max-width: 100%; 
+      max-height: 80vh; 
+    }
+  
+    .buttons {
+      text-align: center;
+      margin-top: 10px;
+    }
+  
+    .buttons button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #764ba2; 
+      color: white;
+      border: none;
+      border-radius: 4px;
+      transition: background-color 0.3s ease;
+    }
+  
+    .buttons button:hover {
+      background-color: #764ba2; 
+    }
+  
+    .button-container {
+      margin-top: 20px;
+      text-align: center;
+    }
+  
+    .button-container .button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color:  #764ba2; 
+      color: white;
+      border: none;
+      border-radius: 4px;
+      transition: background-color 0.3s ease;
+    }
+  
+    .button-container .button:hover {
+      background-color:  #764ba280; 
+    }
+  
+    
+  
+.message {
+  position: absolute;
+  bottom: 10px; 
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px;
+  color: white;
+  font-weight: bold;
+  display: none; 
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+.message.correct {
+  background-color: green;
+}
+
+.message.wrong {
+  background-color: red;
+}
+
+
+
+  
+    .button-container .hidden {
+      display: none;
+    }
+  
+    #editButton {
+      background-color:  #764ba2; 
+    }
+  
+    #editButton:hover {
+      background-color: #764ba2; 
+    }
+  
+    #saveButton {
+      background-color:  #764ba2; 
+    }
+  
+    #saveButton:hover {
+      background-color: #764ba2; 
+    }
+  
+    #load-photo-button {
+      background-color: #764ba2; 
+    }
+  
+    #load-photo-button:hover {
+      background-color:  #764ba2; 
+    }
+  
+    #hide-shapes-button,
+    #show-shapes-button {
+      background-color:  #764ba2; 
+    }
+  
+    #hide-shapes-button:hover,
+    #show-shapes-button:hover {
+      background-color:  #764ba2; 
+    }
+  
+    #colorPicker {
+      margin-top: 10px;
+    }
+   
+    .Message {
+  position: absolute;
+  top: 200px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px;
+  color: rgb(11, 2, 2);
+  font-weight: bold;
+  background-color: rgba(0, 255, 0, 0.7);
+  border-radius: 5px;
+  display: none;
+  white-space: nowrap;
+  z-index: 10; 
+}
+
+
+  </style>
+  
+</head>
+<div class="main">
+    <div class="container">
+        <div class="content">
+            <div>
+            
+  <h1>Photo Editor Section</h1>
+  <div>
+    <label for="file" style="font-size: 25px; font-weight: bold; color:#22044c;">Upload:-</label>
+  <input type="file" id="uploadInput" accept=".png, .jpg, .jpeg"  onchange="handleFileSelect(event)" style="padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #764ba2; color: white; border: none; border-radius: 4px; transition: background-color 0.3s ease;"><br><br>
+  </div>
+  <br><br>
+  <canvas id="canvas"></canvas>
+  <br>
+  <div class="buttons">
+    <button id="editButton" onclick="toggleEditMode()" disabled>Edit</button>
+    <button id="drawSquareBtn" class="hidden" onclick="setDrawMode('square')">Draw Square</button>
+    <button id="eraseAllBtn" class="hidden" onclick="eraseAll()">Erase All</button>
+    <div id="statusMessage" class="Message"></div>
+    <input type="checkbox" id="deleteModeCheckbox" onchange="toggleDeleteMode()"> Delete Mode
+    <button id="saveButton" onclick="saveEditedImage()" disabled>Save</button>
+    <button id="downloadButton" onclick="downloadEditedImage()" disabled>Download</button>
+  </div>
+  </div>
+</div>
+<div>
+  <h1>Photo Check Section</h1>
+
+  <div class="button-container">
+    <p id="shape-instruction" style="font-size: 14px; margin-top: 5px; display: none;">Click on the "Show shapes" button to see the shapes and "Hide shapes" to hide the shapes</p>
+    <button id="load-photo-button" class="button" disabled>Load Edited Photo</button>
+<button id="hide-shapes-button" class="button hidden" disabled>Hide Shapes</button>
+    <button id="show-shapes-button" class="button hidden" disabled>Show Shapes</button>
+   
+  </div>
+</div>
+  <div id="image-container-check" class="image-container">
+    <canvas id="checkCanvas"></canvas>
+    <div class="message" id="message"></div>
+    
+  </div>
+  </div>
+</div>
+</div>
+<script>
+let canvas, ctx, editMode = false;
+let shapes = []; 
+let img; 
+let drawMode = 'square'; 
+let messageTimeout;
+let originalFileName;
+let shapeColor = 'red';
+let isDragging = false;
+let draggedShape = null; 
+// let deleteMode = false; 
+let sizeInPixels; // Define sizeInPixels globally
+window.onload = function() {
+  canvas = document.getElementById('canvas');
+  ctx = canvas.getContext('2d');
+}
+
+function handleFileSelect(event) {
+  const file = event.target.files[0];
+  const reader = new FileReader();
+
+  reader.onload = function(event) {
+    img = new Image();
+    img.onload = function() {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      document.body.style.overflowY = 'auto'; 
+      ctx.drawImage(img, 0, 0);
+      document.getElementById('editButton').disabled = false; 
+      sizeInPixels = Math.min(canvas.width, canvas.height) *  0.1; // Adjust as needed
+    }
+    img.src = event.target.result;
+    originalFileName = file.name; 
+  }
+
+  reader.readAsDataURL(file);
+}
+
+
+function startEditing() {
+  document.getElementById('drawSquareBtn').classList.remove('hidden');
+  document.getElementById('eraseAllBtn').classList.remove('hidden');
+  document.getElementById('saveButton').disabled = false;
+}
+
+function toggleEditMode() {
+  editMode = !editMode;
+  if (editMode) {
+    document.getElementById('drawSquareBtn').classList.remove('hidden');
+    document.getElementById('eraseAllBtn').classList.remove('hidden');
+    // canvas.addEventListener('mousedown', startShapeOrDrag); 
+    redrawCanvas();
+  } else {
+    document.getElementById('drawSquareBtn').classList.add('hidden');
+    document.getElementById('eraseAllBtn').classList.add('hidden');
+    canvas.removeEventListener('mousedown', startShapeOrDrag); 
+    canvas.removeEventListener('click', handleDeleteClick); 
+    redrawCanvas();
+    document.getElementById('saveButton').disabled = false; 
+  }
+}
+
+
+
+function startShapeOrDrag(event) {
+    // if (!deleteMode) {
+  const rect = canvas.getBoundingClientRect();
+//   const mouseX = event.clientX - rect.left;
+//   const mouseY = event.clientY - rect.top;
+  const scaleX = canvas.width / rect.width; // Calculate scale on X axis
+  const scaleY = canvas.height / rect.height; // Calculate scale on Y axis
+  const mouseX = (event.clientX - rect.left) * scaleX; // Adjusted X coordinate
+  const mouseY = (event.clientY - rect.top) * scaleY; // Adjusted Y coordinate
+
+  
+  for (let i = shapes.length - 1; i >= 0; i--) {
+    const shape = shapes[i];
+    // if (mouseX >= shape.x && mouseX <= shape.x + shape.size &&
+    //     mouseY >= shape.y && mouseY <= shape.y + shape.size) {
+        if (mouseX >= shape.x - shape.size / 2 && mouseX <= shape.x + shape.size / 2 &&
+        mouseY >= shape.y - shape.size / 2 && mouseY <= shape.y + shape.size / 2) {
+      draggedShape = shape;
+      draggedShape.dragOffsetX = mouseX - shape.x;
+      draggedShape.dragOffsetY = mouseY - shape.y;
+      canvas.addEventListener('mousemove', drag);
+      canvas.addEventListener('mouseup', endDrag);
+      return;
+    }
+  }
+
+  
+//   const cmToPixels = 50; 
+//   const sizeInPixels = cmToPixels; 
+  shapes.push({ type: 'square', x: mouseX, y: mouseY, size: sizeInPixels, color: shapeColor });
+  redrawCanvas();
+}
+
+
+function drag(event) {
+  if (draggedShape) {
+    const rect = canvas.getBoundingClientRect();
+    // const mouseX = event.clientX - rect.left;
+    // const mouseY = event.clientY - rect.top;
+    const scaleX = canvas.width / rect.width; // Calculate scale on X axis
+  const scaleY = canvas.height / rect.height; // Calculate scale on Y axis
+  const mouseX = (event.clientX - rect.left) * scaleX; // Adjusted X coordinate
+  const mouseY = (event.clientY - rect.top) * scaleY; // Adjusted Y coordinate
+    draggedShape.x = mouseX - draggedShape.dragOffsetX;
+    draggedShape.y = mouseY - draggedShape.dragOffsetY;
+    redrawCanvas();
+  }
+}
+
+function endDrag(event) {
+  draggedShape = null;
+  canvas.removeEventListener('mousemove', drag);
+  canvas.removeEventListener('mouseup', endDrag);
+}
+
+
+function toggleDeleteMode() {
+  deleteMode = document.getElementById('deleteModeCheckbox').checked;
+  if (deleteMode) {
+    canvas.addEventListener('click', handleDeleteClick);
+  } else {
+    canvas.removeEventListener('click', handleDeleteClick);
+  }
+}
+
+function handleDeleteClick(event) {
+  const rect = canvas.getBoundingClientRect();
+//   const mouseX = event.clientX - rect.left;
+//   const mouseY = event.clientY - rect.top;
+const scaleX = canvas.width / rect.width; // Calculate scale on X axis
+  const scaleY = canvas.height / rect.height; // Calculate scale on Y axis
+  const mouseX = (event.clientX - rect.left) * scaleX; // Adjusted X coordinate
+  const mouseY = (event.clientY - rect.top) * scaleY; // Adjusted Y coordinate
+  for (let i = shapes.length - 1; i >= 0; i--) {
+    const shape = shapes[i];
+    if (mouseX >= shape.x && mouseX <= shape.x + shape.size &&
+        mouseY >= shape.y && mouseY <= shape.y + shape.size) {
+      
+      shapes.splice(i, 1);
+      redrawCanvas();
+      return;
+    }
+  }
+}
+
+
+
+function eraseAll() {
+  shapes = []; 
+  redrawCanvas();
+}
+
+function redrawCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img, 0, 0);
+
+  shapes.forEach(shape => {
+    ctx.strokeStyle = shape.color;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.rect(shape.x - shape.size / 2, shape.y - shape.size / 2, shape.size, shape.size);
+    ctx.stroke();
+  });
+document.getElementById('saveButton').disabled = shapes.length === 0;
+}
+function downloadEditedImage() {
+  const dataURL = canvas.toDataURL('image/png');
+  const link = document.createElement('a');
+  link.href = dataURL;
+  link.download = originalFileName.replace(/\.[^/.]+$/, "") + '_Edited1.png';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+
+function saveEditedImage() {
+  const dataURL = canvas.toDataURL('image/png');
+  const link = document.createElement('a');
+  link.href = dataURL;
+  link.download = originalFileName.replace(/\.[^/.]+$/, "") + '_Edited1.png';
+  document.body.appendChild(link);
+//   link.click();
+document.getElementById('downloadButton').disabled = false;
+// Display success message
+const statusMessage = document.getElementById('statusMessage');
+  statusMessage.textContent = 'Image saved successfully.';
+  statusMessage.style.display = 'block';
+
+  // Draw the message on the canvas
+//   const ctx = canvas.getContext('2d');
+//   ctx.font = '24px Arial';
+//   ctx.fillStyle = 'white';
+//   ctx.textAlign = 'center';
+//   ctx.fillText('Image saved successfully.', canvas.width / 2, 30);
+  // Hide the message after 2 seconds
+  setTimeout(() => {
+    statusMessage.style.display = 'none';
+  }, 2000);
+  document.body.removeChild(link);
+  document.getElementById('load-photo-button').disabled = false;
+}
+    function setDrawMode(mode) {
+      drawMode = mode;
+      if (drawMode === 'square') {
+    // Add event listener for drawing squares when draw mode is set to square
+    canvas.addEventListener('mousedown', startShapeOrDrag);
+  } else {
+    // Remove event listener for drawing squares for other draw modes if needed
+    canvas.removeEventListener('mousedown', startShapeOrDrag);
+  }
+    }
+    
+function loadEditedPhoto() {
+        if (canvas.toDataURL() === "data:,") {
+    showMessage('Please edit and save an image first.');
+    return;
+  }
+      const editedImg = new Image();
+      editedImg.onload = function() {
+        const checkCanvas = document.getElementById('checkCanvas');
+        checkCanvas.width = img.width;
+        checkCanvas.height = img.height;
+        const checkCtx = checkCanvas.getContext('2d');
+        checkCtx.drawImage(editedImg, 0, 0);
+        toggleShapesVisibility(false);
+        // Show instruction
+    document.getElementById('shape-instruction').style.display = 'block';
+        // Enable show/hide buttons
+        document.getElementById('hide-shapes-button').classList.remove('hidden');
+        document.getElementById('show-shapes-button').classList.remove('hidden');
+        document.getElementById('hide-shapes-button').disabled = false;
+        document.getElementById('show-shapes-button').disabled = false;
+      };
+      editedImg.src = canvas.toDataURL(); 
+    }
+let selectedShapeIndex = -1; 
+function toggleShapesVisibility(showAll = true) {
+  const checkCanvas = document.getElementById('checkCanvas');
+  const checkCtx = checkCanvas.getContext('2d');
+  checkCtx.clearRect(0, 0, checkCanvas.width, checkCanvas.height);
+  checkCtx.drawImage(img, 0, 0);
+
+  if (showAll) {
+    shapes.forEach(shape => {
+      checkCtx.strokeStyle = shape.color;
+      checkCtx.lineWidth = 4; 
+      checkCtx.beginPath();
+      checkCtx.rect(shape.x - shape.size / 2, shape.y - shape.size / 2, shape.size, shape.size);
+      checkCtx.stroke();
+    });
+  } else {
+    
+    if (selectedShapeIndex !== -1) {
+      const shape = shapes[selectedShapeIndex];
+      checkCtx.strokeStyle = shape.color;
+      checkCtx.lineWidth = 6; 
+      checkCtx.beginPath();
+      checkCtx.rect(shape.x - shape.size / 2, shape.y - shape.size / 2, shape.size, shape.size);
+      checkCtx.stroke();
+    }
+  }
+}
+
+document.getElementById('show-shapes-button').addEventListener('click', function() {
+  toggleShapesVisibility(true); 
+});
+
+document.getElementById('hide-shapes-button').addEventListener('click', function() {
+    selectedShapeIndex=null
+  toggleShapesVisibility(false); 
+});
+
+document.getElementById('checkCanvas').addEventListener('click', function(event) {
+  const checkCanvas = document.getElementById('checkCanvas');
+  const rect = checkCanvas.getBoundingClientRect();
+//   const mouseX = event.clientX - rect.left;
+//   const mouseY = event.clientY - rect.top;
+const scaleX = canvas.width / rect.width; // Calculate scale on X axis
+  const scaleY = canvas.height / rect.height; // Calculate scale on Y axis
+  const mouseX = (event.clientX - rect.left) * scaleX; // Adjusted X coordinate
+  const mouseY = (event.clientY - rect.top) * scaleY; // Adjusted Y coordinate
+  selectedShapeIndex = -1;
+
+  shapes.forEach((shape, index) => {
+    const halfSize = shape.size / 2;
+    if (mouseX >= shape.x - halfSize && mouseX <= shape.x + halfSize &&
+        mouseY >= shape.y - halfSize && mouseY <= shape.y + halfSize) {
+      selectedShapeIndex = index;
+    }
+  });
+
+  if (selectedShapeIndex !== -1) {
+    showMessage('Correct!',true);
+    toggleShapesVisibility(false);
+  } else {
+    showMessage('Wrong!',false);
+  }
+});
+    document.getElementById('load-photo-button').addEventListener('click', loadEditedPhoto);
+    function showMessage(msg, isCorrect) {
+  const message = document.getElementById('message');
+  message.textContent = msg;
+  message.style.display = 'block';
+  clearTimeout(messageTimeout);
+  message.classList.remove('correct');
+  message.classList.remove('wrong');
+  if (isCorrect) {
+    message.classList.add('correct');
+  } else {
+    message.classList.add('wrong');
+  }
+messageTimeout = setTimeout(() => {
+    message.style.display = 'none';
+  }, 2000);
+}
+  </script>
+  
+</body>
+</html>
